@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="献立表">
+<title>献立表アプリ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+:root{--bg:#F7F5F0;--bg2:#EEEAE3;--bg3:#E5E0D8;--text:#2A2520;--text2:#6B6460;--text3:#9E9890;--border:#D8D3CB;--border2:#C8C2BA;--accent:#4A3F35;--accent-light:#EDE8E2;--green:#3D6B4F;--green-light:#E8F2EC;--red:#8B3A3A;--red-light:#F5E8E8;--blue:#3A5A8B;--radius:10px;--font:'Noto Sans JP',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;}
+.app-header{background:var(--accent);color:#F7F5F0;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.app-header h1{font-size:16px;font-weight:700;letter-spacing:.05em;display:flex;align-items:center;gap:8px;}
+.header-sub{font-size:11px;opacity:.7;}
+.tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;}
+.tab{flex:1;min-width:70px;padding:10px 6px;font-size:12px;font-weight:500;color:var(--text2);background:none;border:none;cursor:pointer;font-family:var(--font);border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:4px;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg);}
+.panel{display:none;padding:16px;}
+.panel.active{display:block;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);transition:all .15s;white-space:nowrap;}
+.btn:hover{background:var(--bg2);}
+.btn:active{transform:scale(.97);}
+.btn-accent{background:var(--accent);color:#F7F5F0;border-color:var(--accent);}
+.btn-accent:hover{background:#5C4F44;}
+.btn-green{background:var(--green-light);color:var(--green);border-color:#A8C9B5;}
+.btn-green.done{background:#C8EDE0;}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);background:white;}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:480px;}
+thead th{background:var(--bg2);font-weight:700;font-size:11px;color:var(--text2);text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);}
+td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top;}
+td:first-child{width:40px;text-align:center;font-weight:700;font-size:13px;background:var(--bg2);border-right:1px solid var(--border);}
+.day-sun td:first-child{color:var(--red);}
+.day-sat td:first-child{color:var(--blue);}
+.day-weekday td:first-child{color:var(--text2);}
+tr:last-child td{border-bottom:none;}
+.meal-cell{display:flex;align-items:flex-start;gap:4px;}
+.meal-text{flex:1;}
+.meal-base{font-size:10px;color:var(--text3);display:block;line-height:1.6;}
+.meal-main{font-size:12px;color:var(--text);display:block;line-height:1.6;font-weight:700;margin-top:1px;}
+.meal-side{font-size:12px;color:var(--text2);display:block;line-height:1.6;margin-top:1px;}
+.meal-free{font-size:12px;color:var(--text2);display:block;line-height:1.6;margin-top:2px;border:none;border-bottom:1px dashed var(--border2);background:transparent;font-family:var(--font);width:100%;outline:none;padding:0;}
+.meal-free::placeholder{color:var(--text3);font-style:italic;}
+.edit-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:2px;font-size:13px;opacity:0;border-radius:4px;flex-shrink:0;}
+td:hover .edit-btn{opacity:1;}
+.meal-input{width:100%;border:1px solid var(--border2);background:var(--bg);font-family:var(--font);font-size:12px;color:var(--text);outline:none;padding:4px 6px;border-radius:6px;line-height:1.5;margin-bottom:4px;}
+.meal-input:focus{border-color:var(--accent);}
+.meal-input:last-child{margin-bottom:0;}
+.lunch-wrap{display:flex;flex-direction:column;gap:5px;}
+.lunch-checks{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;}
+.check-btn{border:1px solid var(--border);border-radius:6px;background:var(--bg2);font-size:12px;padding:3px 0;cursor:pointer;text-align:center;font-family:var(--font);color:var(--text3);user-select:none;}
+.check-btn.is-batu{background:var(--red-light);border-color:#D4A0A0;color:var(--red);font-weight:700;}
+.lunch-input{width:100%;border:none;border-bottom:1px dashed var(--border2);background:transparent;font-family:var(--font);font-size:12px;color:var(--text);outline:none;padding:2px 0;line-height:1.5;}
+.lunch-input::placeholder{color:var(--text3);font-style:italic;}
+.shop-info{font-size:12px;color:var(--text2);background:var(--accent-light);border:1px solid var(--border2);border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.shop-add-row{display:flex;gap:6px;margin-bottom:12px;}
+.shop-add-inp{flex:1;border:1px solid var(--border);border-radius:6px;background:white;font-family:var(--font);font-size:12px;color:var(--text);padding:5px 8px;outline:none;}
+.shop-add-btn{padding:5px 10px;border:1px solid var(--accent);border-radius:6px;background:var(--accent-light);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.db-meal-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.db-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.db-box{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;}
+.db-box-label{font-size:10px;font-weight:700;color:var(--text2);margin-bottom:8px;letter-spacing:.06em;text-transform:uppercase;}
+.db-tags{display:flex;flex-wrap:wrap;gap:5px;min-height:28px;margin-bottom:8px;}
+.db-tag{display:flex;align-items:center;gap:3px;background:var(--accent-light);border:1px solid var(--border2);border-radius:20px;padding:2px 6px 2px 8px;font-size:11px;color:var(--text);}
+.db-tag.has-ing{background:var(--green-light);border-color:#A8C9B5;color:var(--green);cursor:pointer;}
+.db-tag button{background:none;border:none;cursor:pointer;color:var(--text3);font-size:12px;padding:0;line-height:1;}
+.db-tag button:hover{color:var(--red);}
+.db-add{display:flex;gap:5px;}
+.db-inp{flex:1;border:1px solid var(--border);border-radius:6px;background:var(--bg);font-family:var(--font);font-size:12px;color:var(--text);padding:5px 8px;outline:none;}
+.db-add-btn{padding:5px 10px;border:1px solid var(--accent);border-radius:6px;background:var(--accent-light);color:var(--accent);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.db-divider{border:none;border-top:1px solid var(--border);margin:16px 0;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+.modal-overlay.hidden{display:none;}
+.modal{background:white;border-radius:16px 16px 0 0;width:100%;max-width:500px;padding:20px 16px 32px;max-height:80vh;overflow-y:auto;}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+.modal-sub{font-size:12px;color:var(--text2);margin-bottom:14px;}
+.ing-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;min-height:32px;}
+.ing-tag{display:flex;align-items:center;gap:4px;background:var(--green-light);border:1px solid #A8C9B5;border-radius:20px;padding:3px 8px 3px 10px;font-size:12px;color:var(--green);}
+.ing-tag button{background:none;border:none;cursor:pointer;color:var(--green);font-size:13px;padding:0;}
+.ing-add-row{display:flex;gap:6px;margin-bottom:16px;}
+.ing-inp{flex:1;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-family:var(--font);font-size:13px;color:var(--text);padding:8px 10px;outline:none;}
+.ing-add-btn{padding:8px 14px;border:1px solid var(--accent);border-radius:8px;background:var(--accent);color:#F7F5F0;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.modal-close{width:100%;padding:10px;border:1px solid var(--border2);border-radius:8px;background:var(--bg2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);}
+.print-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px;}
+.print-overlay.hidden{display:none;}
+.print-box{background:white;border-radius:12px;padding:20px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;}
+.print-box h2{font-size:16px;font-weight:700;margin-bottom:4px;color:var(--text);}
+.print-week{font-size:12px;color:var(--text2);margin-bottom:14px;}
+.print-table{width:100%;border-collapse:collapse;font-size:12px;}
+.print-table th{background:var(--bg2);padding:7px 10px;text-align:left;font-size:11px;color:var(--text2);border:1px solid var(--border);}
+.print-table td{padding:8px 10px;border:1px solid var(--border);vertical-align:top;color:var(--text);line-height:1.6;}
+.print-table td:first-child{text-align:center;font-weight:700;width:32px;background:var(--bg2);}
+.print-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.print-btn{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border2);background:var(--bg2);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;}
+.print-btn.accent{background:var(--accent);color:white;border-color:var(--accent);}
+.print-btn.green{background:var(--green-light);color:var(--green);border-color:#A8C9B5;}
+.print-btn.green.done{background:#C8EDE0;}
+.mood-card{background:white;border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1rem;}
+.mood-label{font-size:12px;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.mood-input{width:100%;border:1px solid var(--border);border-radius:8px;background:var(--bg);font-size:13px;color:var(--text);padding:9px 11px;outline:none;font-family:var(--font);resize:none;line-height:1.6;}
+.hint-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
+.hint-tag{font-size:11px;padding:3px 9px;border:1px solid var(--border);border-radius:20px;background:var(--bg2);color:var(--text2);cursor:pointer;}
+.hint-tag:hover{background:var(--bg3);}
+.mood-btn{width:100%;padding:10px;border:1px solid var(--accent);border-radius:8px;background:var(--accent-light);color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;}
+.mood-btn:hover{background:var(--bg3);}
+.info-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.6;margin-top:1rem;display:flex;gap:8px;}
+.save-toast{position:fixed;bottom:20px;right:16px;background:var(--accent);color:#F7F5F0;font-size:12px;padding:8px 14px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;}
+.save-toast.show{opacity:1;}
+.legend{font-size:11px;color:var(--text3);margin-top:12px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+<div class="app-header">
+  <h1><i class="ti ti-calendar"></i>献立表</h1>
+  <span class="header-sub" id="weekLabel"></span>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('meals',this)"><i class="ti ti-calendar" style="font-size:13px"></i>献立</button>
+  <button class="tab" onclick="switchTab('mood',this)"><i class="ti ti-mood-smile" style="font-size:13px"></i>気分生成</button>
+  <button class="tab" onclick="switchTab('shop',this)"><i class="ti ti-shopping-cart" style="font-size:13px"></i>買い物</button>
+  <button class="tab" onclick="switchTab('db',this)"><i class="ti ti-database" style="font-size:13px"></i>メニューDB</button>
+</div>
+
+<div class="panel active" id="panel-meals">
+  <div class="btn-row">
+    <button class="btn btn-accent" onclick="autoGenerate()"><i class="ti ti-sparkles"></i>DBから自動生成</button>
+    <button class="btn btn-green" id="copyMealBtn" onclick="copyMealText()"><i class="ti ti-brand-line"></i>LINEにコピー</button>
+    <button class="btn" onclick="showPrint()"><i class="ti ti-printer"></i>印刷</button>
+    <button class="btn" onclick="saveData()"><i class="ti ti-device-floppy"></i>保存</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>日</th><th>朝食</th><th>昼食</th><th>夕食</th></tr></thead>
+      <tbody id="mealBody"></tbody>
+    </table>
+  </div>
+  <p class="legend"><i class="ti ti-hand-click" style="font-size:11px"></i>昼食マスをタップで×切替&nbsp;·&nbsp;<i class="ti ti-edit" style="font-size:11px"></i>朝食・夕食はカーソルを当てると編集</p>
+</div>
+
+<div class="panel" id="panel-mood">
+  <div class="mood-card">
+    <p class="mood-label"><i class="ti ti-mood-smile"></i>今週の気分・テーマを入力</p>
+    <textarea class="mood-input" id="moodInput" rows="3" placeholder="例：今週は魚料理を多めに。あっさりしたものが食べたい。"></textarea>
+    <div class="hint-row">
+      <span class="hint-tag" onclick="setHint('今週は魚中心で、あっさりしたものがいい')">魚中心・あっさり</span>
+      <span class="hint-tag" onclick="setHint('がっつり肉料理が食べたい。ボリューム重視で')">がっつり肉</span>
+      <span class="hint-tag" onclick="setHint('簡単で時短なものがいい')">簡単・時短</span>
+      <span class="hint-tag" onclick="setHint('和食中心で体に優しいものを')">和食・体に優しい</span>
+      <span class="hint-tag" onclick="setHint('野菜をたくさん摂りたい。ヘルシー志向で')">野菜・ヘルシー</span>
+    </div>
+    <button class="mood-btn" onclick="requestMoodGen()"><i class="ti ti-message-forward"></i>Claudeに献立を提案してもらう（チャットへ）</button>
+  </div>
+  <div class="info-box"><i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0;margin-top:1px"></i><span>※この機能はClaude.aiのチャット上でのみ動作します。</span></div>
+</div>
+
+<div class="panel" id="panel-shop">
+  <div class="shop-info"><i class="ti ti-info-circle" style="font-size:14px;flex-shrink:0"></i>献立の自動生成時に夕食主菜の食材が自動追加されます</div>
+  <div class="btn-row">
+    <button class="btn btn-green" id="copyShopBtn" onclick="copyList()"><i class="ti ti-copy"></i>テキストをコピー</button>
+    <button class="btn" onclick="resetShop()"><i class="ti ti-refresh"></i>リセット</button>
+  </div>
+  <div class="shop-add-row">
+    <input class="shop-add-inp" id="shopInp" placeholder="食材を手動追加" onkeydown="if(event.key==='Enter')addShopManual()">
+    <button class="shop-add-btn" onclick="addShopManual()">追加</button>
+  </div>
+  <div id="shopGrid"></div>
+</div>
+
+<div class="panel" id="panel-db">
+  <div class="db-meal-title"><i class="ti ti-sun" style="font-size:14px"></i>朝食</div>
+  <div class="db-grid">
+    <div class="db-box"><div class="db-box-label">主菜</div><div class="db-tags" id="db-朝食-主菜"></div><div class="db-add"><input class="db-inp" id="inp-朝食-主菜" placeholder="例：納豆" onkeydown="if(event.key==='Enter')addItem('朝食','主菜')"><button class="db-add-btn" onclick="addItem('朝食','主菜')">追加</button></div></div>
+    <div class="db-box"><div class="db-box-label">副菜</div><div class="db-tags" id="db-朝食-副菜"></div><div class="db-add"><input class="db-inp" id="inp-朝食-副菜" placeholder="例：フルーツ" onkeydown="if(event.key==='Enter')addItem('朝食','副菜')"><button class="db-add-btn" onclick="addItem('朝食','副菜')">追加</button></div></div>
+  </div>
+  <hr class="db-divider">
+  <div class="db-meal-title"><i class="ti ti-sun-2" style="font-size:14px"></i>昼食</div>
+  <div class="db-grid">
+    <div class="db-box"><div class="db-box-label">主菜</div><div class="db-tags" id="db-昼食-主菜"></div><div class="db-add"><input class="db-inp" id="inp-昼食-主菜" placeholder="例：ラーメン" onkeydown="if(event.key==='Enter')addItem('昼食','主菜')"><button class="db-add-btn" onclick="addItem('昼食','主菜')">追加</button></div></div>
+    <div class="db-box"><div class="db-box-label">副菜</div><div class="db-tags" id="db-昼食-副菜"></div><div class="db-add"><input class="db-inp" id="inp-昼食-副菜" placeholder="例：サラダ" onkeydown="if(event.key==='Enter')addItem('昼食','副菜')"><button class="db-add-btn" onclick="addItem('昼食','副菜')">追加</button></div></div>
+  </div>
+  <hr class="db-divider">
+  <div class="db-meal-title"><i class="ti ti-moon" style="font-size:14px"></i>夕食</div>
+  <p style="font-size:11px;color:var(--text2);margin-bottom:10px;"><i class="ti ti-leaf" style="color:var(--green)"></i> 緑色は食材登録済み。タップで編集できます。</p>
+  <div class="db-grid">
+    <div class="db-box"><div class="db-box-label">主菜（タップで食材登録）</div><div class="db-tags" id="db-夕食-主菜"></div><div class="db-add"><input class="db-inp" id="inp-夕食-主菜" placeholder="例：肉じゃが" onkeydown="if(event.key==='Enter')addItem('夕食','主菜')"><button class="db-add-btn" onclick="addItem('夕食','主菜')">追加</button></div></div>
+    <div class="db-box"><div class="db-box-label">副菜・小鉢</div><div class="db-tags" id="db-夕食-副菜"></div><div class="db-add"><input class="db-inp" id="inp-夕食-副菜" placeholder="例：きんぴらごぼう" onkeydown="if(event.key==='Enter')addItem('夕食','副菜')"><button class="db-add-btn" onclick="addItem('夕食','副菜')">追加</button></div></div>
+  </div>
+  <button class="btn" onclick="saveData()" style="margin-top:4px"><i class="ti ti-device-floppy"></i>DBを保存</button>
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay" onclick="closeIngModal(event)">
+  <div class="modal">
+    <p class="modal-title" id="modalTitle"></p>
+    <p class="modal-sub">買い物リストに自動追加される食材を登録</p>
+    <div class="ing-tags" id="ingTags"></div>
+    <div class="ing-add-row">
+      <input class="ing-inp" id="ingInp" placeholder="食材名（例：じゃがいも）" onkeydown="if(event.key==='Enter')addIngredient()">
+      <button class="ing-add-btn" onclick="addIngredient()">追加</button>
+    </div>
+    <button class="modal-close" onclick="closeIngModalDirect()">閉じる</button>
+  </div>
+</div>
+
+<div class="print-overlay hidden" id="printOverlay" onclick="closePrintModal(event)">
+  <div class="print-box">
+    <div id="printContent"></div>
+    <div class="print-actions">
+      <button class="print-btn accent" onclick="doPrint()"><i class="ti ti-printer"></i>印刷する</button>
+      <button class="print-btn green" id="printCopyBtn" onclick="doCopyForLine()"><i class="ti ti-brand-line"></i>LINEにコピー</button>
+      <button class="print-btn" onclick="closePrintModalDirect()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="save-toast" id="saveToast">保存しました ✓</div>
+
+<script>
+const DAYS=['日','月','火','水','木','金','土'];
+const SK='献立アプリv2';
+
+// 食材DB（全メニュー対応）
+const BUILTIN_ING={
+  '肉じゃが':['じゃがいも','玉ねぎ','にんじん','豚こま肉','醤油','みりん','砂糖'],
+  '鶏の唐揚げ':['鶏もも肉','醤油','みりん','生姜','にんにく','片栗粉'],
+  'サバの味噌煮':['サバ（切り身）','味噌','みりん','砂糖','生姜'],
+  '豚の生姜焼き':['豚こま肉','生姜','醤油','みりん','砂糖'],
+  '鮭の塩焼き':['鮭の切り身','塩'],
+  'すき焼き':['牛肉','白菜','ねぎ','豆腐','しらたき','醤油','みりん','砂糖'],
+  '鶏の照り焼き':['鶏もも肉','醤油','みりん','砂糖'],
+  '豚の角煮':['豚バラ肉','醤油','みりん','砂糖','生姜'],
+  '牛肉のしぐれ煮':['牛肉','生姜','醤油','みりん','砂糖'],
+  'エビフライ':['エビ','パン粉','卵','薄力粉','塩','こしょう'],
+  'オムライス':['卵','鶏もも肉','玉ねぎ','ご飯','ケチャップ','バター'],
+  '親子丼':['鶏もも肉','玉ねぎ','卵','醤油','みりん','砂糖','だし'],
+  'カレーライス':['鶏もも肉','玉ねぎ','にんじん','じゃがいも','カレールー'],
+  '牛丼':['牛肉','玉ねぎ','醤油','みりん','砂糖','だし'],
+  '餃子':['豚ひき肉','キャベツ','ニラ','にんにく','生姜','醤油','ごま油','餃子の皮'],
+  'グラタン':['鶏もも肉','玉ねぎ','マカロニ','牛乳','バター','薄力粉','チーズ'],
+  'ゴーヤチャンプルー':['ゴーヤ','豆腐','豚こま肉','卵','醤油','塩','かつお節'],
+  'コロッケ':['じゃがいも','玉ねぎ','豚ひき肉','パン粉','卵','薄力粉','塩','こしょう'],
+  'ささみフライ':['鶏ささみ','パン粉','卵','薄力粉','塩','こしょう'],
+  'さんま浜焼':['さんま','塩'],
+  'シチュー':['鶏もも肉','玉ねぎ','にんじん','じゃがいも','シチュールー','牛乳'],
+  '筍ご飯':['筍','ご飯','醤油','みりん','だし','油揚げ'],
+  '筍と豚肉炒め':['筍','豚こま肉','醤油','みりん','砂糖','ごま油'],
+  'チキン南蛮':['鶏もも肉','卵','酢','醤油','砂糖','マヨネーズ','玉ねぎ'],
+  'チャプチェ':['春雨','牛肉','ほうれん草','にんじん','玉ねぎ','醤油','ごま油','砂糖'],
+  '青椒菜と豚バラオイスターソース':['ピーマン','豚バラ肉','オイスターソース','醤油','ごま油'],
+  'チンジャオロース':['ピーマン','牛肉','たけのこ','醤油','オイスターソース','ごま油','片栗粉'],
+  'つくね':['鶏ひき肉','玉ねぎ','生姜','醤油','みりん','砂糖','片栗粉'],
+  '手羽先':['手羽先','醤油','みりん','砂糖','にんにく','生姜'],
+  '天ぷら':['エビ','なす','かぼちゃ','薄力粉','卵','冷水','天つゆ'],
+  '鶏そぼろ':['鶏ひき肉','醤油','みりん','砂糖','生姜'],
+  '鶏とごぼう炒め':['鶏もも肉','ごぼう','醤油','みりん','砂糖','ごま油'],
+  '鶏むね肉ごま照りスティック':['鶏むね肉','醤油','みりん','砂糖','ごま'],
+  '豚カツ':['豚ロース肉','パン粉','卵','薄力粉','塩','こしょう','キャベツ'],
+  'ハムチーズ':['ハム','チーズ','薄力粉','卵','パン粉'],
+  '豚汁':['豚こま肉','大根','にんじん','じゃがいも','ごぼう','味噌','だし'],
+  '鍋':['白菜','ねぎ','豆腐','鶏もも肉','しらたき','だし','醤油','みりん'],
+  '肉団子':['豚ひき肉','玉ねぎ','生姜','醤油','片栗粉','卵'],
+  '白菜と厚揚げ炒め':['白菜','厚揚げ','醤油','みりん','ごま油'],
+  'ハヤシライス':['牛肉','玉ねぎ','マッシュルーム','ハヤシルー','バター'],
+  '春巻き':['豚ひき肉','春雨','キャベツ','春巻きの皮','醤油','ごま油','片栗粉'],
+  'ハンバーグ':['合いびき肉','玉ねぎ','卵','パン粉','牛乳','塩','こしょう'],
+  '豚キムチ':['豚こま肉','キムチ','玉ねぎ','醤油','ごま油'],
+  '豚肉甘辛炒め':['豚こま肉','醤油','みりん','砂糖','にんにく','生姜'],
+  '豚とレンコンと長ネギ炒め':['豚こま肉','れんこん','長ねぎ','醤油','みりん','ごま油'],
+  '豚バラ甘酢':['豚バラ肉','酢','醤油','砂糖','片栗粉'],
+  'ぶり照り焼き':['ぶり','醤油','みりん','砂糖'],
+  '回鍋肉':['豚バラ肉','キャベツ','ピーマン','豆板醤','テンメンジャン','醤油','ごま油'],
+  '麻婆豆腐':['豆腐','豚ひき肉','長ねぎ','にんにく','生姜','豆板醤','テンメンジャン','醤油','片栗粉'],
+  'もやしとピーマンの豚肉炒め':['もやし','ピーマン','豚こま肉','醤油','ごま油','塩','こしょう'],
+  '野菜炒め':['キャベツ','もやし','にんじん','豚こま肉','醤油','塩','こしょう','ごま油'],
+  'ミートドリア':['合いびき肉','玉ねぎ','トマト缶','ご飯','チーズ','バター','ケチャップ'],
+  'エビとブロッコリーの中華炒め':['エビ','ブロッコリー','にんにく','塩','こしょう','ごま油','片栗粉'],
+  '豚肉と筍のオイスター炒め':['豚こま肉','筍','オイスターソース','醤油','ごま油','片栗粉'],
+  'あじフライ':['あじ','パン粉','卵','薄力粉','塩','こしょう'],
+  'ガリボンチキン':['鶏もも肉','にんにく','醤油','みりん','砂糖','生姜'],
+  '牛肉とごぼう':['牛肉','ごぼう','醤油','みりん','砂糖','ごま'],
+  '豚肉巻き':['豚バラ肉','いんげん','にんじん','醤油','みりん','砂糖'],
+  // 昼食
+  'ちらし寿司':['酢飯','刺身（まぐろ・サーモン等）','卵','きゅうり','れんこん','しいたけ','醤油','みりん'],
+  'ラーメン':['中華麺','スープ（醤油・味噌・塩）','チャーシュー','ねぎ','メンマ','海苔','卵'],
+  'うどん':['うどん麺','だし','醤油','みりん','ねぎ','天かす','わかめ'],
+  'ナポリタン':['スパゲティ','ウインナー','玉ねぎ','ピーマン','マッシュルーム','ケチャップ','バター','塩','こしょう'],
+  'ビビンバ丼':['ご飯','牛肉','ほうれん草','もやし','にんじん','コチュジャン','ごま油','醤油','卵'],
+  'ミートソース':['スパゲティ','合いびき肉','玉ねぎ','にんじん','トマト缶','ケチャップ','塩','こしょう','にんにく'],
+  '冷しゃぶ':['豚薄切り肉','レタス','きゅうり','トマト','ごまだれ','ポン酢'],
+  'そうめん':['そうめん','だし','醤油','みりん','ねぎ','生姜','みょうが'],
+  'サンドウィッチ':['食パン','ハム','チーズ','レタス','トマト','卵','マヨネーズ'],
+  'おしるこ':['小豆','餅','砂糖','塩'],
+  '揚げ餅':['餅','醤油','砂糖','みりん','のり'],
+  'チャーハン':['ご飯','卵','ねぎ','チャーシュー','醤油','塩','こしょう','ごま油'],
+  '肉団子':['豚ひき肉','玉ねぎ','生姜','醤油','片栗粉','卵'],
+  '豚バラとビーマンの塩昆布炒め':['豚バラ肉','ピーマン','塩昆布','ごま油'],
+  '豚肉とナスのさっぱり炒め':['豚こま肉','なす','ポン酢','ごま油','生姜'],
+  '小松菜と豚肉の卵炒め':['小松菜','豚こま肉','卵','醤油','ごま油','塩'],
+  '豚肉となすとビーマンの豆板醤炒め':['豚こま肉','なす','ピーマン','豆板醤','醤油','ごま油','にんにく'],
+  'エビとブロッコリーのオイマヨ':['エビ','ブロッコリー','オイスターソース','マヨネーズ','にんにく'],
+  '白菜と豚肉のうま煮':['白菜','豚こま肉','醤油','みりん','だし','片栗粉'],
+  '鶏肉ハニーマスタード':['鶏もも肉','はちみつ','粒マスタード','醤油','バター'],
+  'エビチリ':['エビ','ねぎ','にんにく','生姜','豆板醤','ケチャップ','片栗粉'],
+  'えのきと卵':['えのき','卵','醤油','みりん','ごま油'],
+  'ささみブロッコリー':['鶏ささみ','ブロッコリー','マヨネーズ','醤油','ごま'],
+  '白菜と豚バラ':['白菜','豚バラ肉','醤油','みりん','だし'],
+  'イカバター焼き':['イカ','バター','醤油','みりん'],
+  '枝豆':['枝豆','塩'],
+  'かぼちゃ煮付け':['かぼちゃ','醤油','みりん','砂糖','だし'],
+  'キャベツ千切り':['キャベツ','塩'],
+  'きゅうりしらす':['きゅうり','しらす','ごま油','醤油'],
+  'きゅうりスティック':['きゅうり','味噌'],
+  'きゅうりとわかめとツナの酢の物':['きゅうり','わかめ','ツナ缶','酢','砂糖','塩'],
+  'グリーンサラダ':['レタス','きゅうり','トマト','ドレッシング'],
+  'ゴーヤポン酢和え':['ゴーヤ','ポン酢','かつお節'],
+  'ごまきゅうり':['きゅうり','ごま','醤油','ごま油','砂糖'],
+  '小松菜とツナ':['小松菜','ツナ缶','醤油','みりん'],
+  '里芋のそぼろ煮':['里芋','鶏ひき肉','醤油','みりん','砂糖','だし'],
+  '塩キャベツ':['キャベツ','塩','ごま油'],
+  'タコの酢の物':['タコ','きゅうり','酢','砂糖','塩'],
+  '筑前煮':['鶏もも肉','れんこん','にんじん','ごぼう','こんにゃく','しいたけ','醤油','みりん','砂糖'],
+  'ちくわ磯辺揚げ':['ちくわ','薄力粉','青のり','卵','水'],
+  'ちくわチーズ甘辛':['ちくわ','チーズ','醤油','みりん','砂糖'],
+  'ちくわと小松菜炒め':['ちくわ','小松菜','醤油','みりん','ごま油'],
+  'ところてん':['ところてん','酢','醤油','からし'],
+  '長芋千切り':['長芋','醤油','かつお節'],
+  '素豆':['大豆','醤油','みりん','砂糖'],
+  'ニラ玉':['ニラ','卵','醤油','ごま油','塩'],
+  'ニラ玉スープ':['ニラ','卵','だし','醤油','塩'],
+  'バターコーン':['コーン','バター','塩'],
+  '春雨サラダ':['春雨','きゅうり','にんじん','ハム','酢','醤油','ごま油','砂糖'],
+  'ビーマン塩昆布炒め':['ピーマン','塩昆布','ごま油'],
+  'ひじき':['ひじき','油揚げ','にんじん','醤油','みりん','砂糖'],
+  '冷やしトマト':['トマト','醤油'],
+  'ブロッコリー':['ブロッコリー','塩'],
+  'ブロッコリー胡麻和え':['ブロッコリー','ごま','醤油','みりん'],
+  'ほうれん草おひたし':['ほうれん草','醤油','かつお節'],
+  'ほうれん草胡麻和え':['ほうれん草','ごま','醤油','砂糖'],
+  'ほうれん草バター炒め':['ほうれん草','バター','醤油','塩'],
+  'ポテトサラダ':['じゃがいも','玉ねぎ','きゅうり','ハム','マヨネーズ','塩','こしょう'],
+  'ポテトフライ':['じゃがいも','塩','こしょう'],
+  'マカロニサラダ':['マカロニ','ハム','きゅうり','玉ねぎ','マヨネーズ','塩','こしょう'],
+  'もずく':['もずく','酢','醤油','みりん'],
+  'もやし胡麻和え':['もやし','ごま','醤油','ごま油'],
+  'レンコンきんぴら':['れんこん','醤油','みりん','砂糖','ごま油'],
+  '厚揚げ焼き':['厚揚げ','醤油','みりん','ねぎ'],
+  'ジャーマンポテト':['じゃがいも','ベーコン','玉ねぎ','塩','こしょう','バター'],
+  '大根サラダ':['大根','ドレッシング','かつお節'],
+  '大根とツナの塩昆布サラダ':['大根','ツナ缶','塩昆布','ごま油'],
+  'かまぼこ':['かまぼこ','わさび','醤油'],
+  'にんじんしりしり':['にんじん','卵','ツナ缶','醤油','ごま油'],
+  '根菜胡麻サラダ':['ごぼう','にんじん','れんこん','ごま','マヨネーズ','醤油'],
+  'ブロッコリーとかにかまサラダ':['ブロッコリー','かにかま','マヨネーズ','塩'],
+  'スパサラ':['スパゲティ','ハム','きゅうり','玉ねぎ','マヨネーズ','塩','こしょう'],
+  'アスパラベーコン':['アスパラ','ベーコン','塩','こしょう','バター']
+};
+
+const DEFAULT_DB={
+  '朝食':{
+    '主菜':['納豆','卵焼き','目玉焼き','ゆで卵','焼き鮭','温泉卵','ウインナー','ハッシュドポテト','ハム','スクランブルエッグ','生卵','ベーコン','しらすと生卵'],
+    '副菜':[]
+  },
+  '昼食':{
+    '主菜':['ちらし寿司','ラーメン','うどん','ナポリタン','ビビンバ丼','ミートソース','冷しゃぶ','そうめん','サンドウィッチ','おしるこ','揚げ餅','チャーハン'],
+    '副菜':[]
+  },
+  '夕食':{
+    '主菜':['肉じゃが','鶏の唐揚げ','サバの味噌煮','豚の生姜焼き','鮭の塩焼き','すき焼き','鶏の照り焼き','豚の角煮','牛肉のしぐれ煮','エビフライ','オムライス','親子丼','カレーライス','牛丼','餃子','グラタン','ゴーヤチャンプルー','コロッケ','ささみフライ','さんま浜焼','シチュー','筍ご飯','筍と豚肉炒め','チキン南蛮','チャプチェ','青椒菜と豚バラオイスターソース','チンジャオロース','つくね','手羽先','天ぷら','鶏そぼろ','鶏とごぼう炒め','鶏むね肉ごま照りスティック','豚カツ','ハムチーズ','豚汁','鍋','肉団子','白菜と厚揚げ炒め','ハヤシライス','春巻き','ハンバーグ','豚キムチ','豚肉甘辛炒め','豚とレンコンと長ネギ炒め','豚バラ甘酢','ぶり照り焼き','回鍋肉','麻婆豆腐','もやしとピーマンの豚肉炒め','野菜炒め','ミートドリア','エビとブロッコリーの中華炒め','豚肉と筍のオイスター炒め','あじフライ','ガリボンチキン','牛肉とごぼう','豚肉巻き','肉団子','豚バラとビーマンの塩昆布炒め','豚肉とナスのさっぱり炒め','小松菜と豚肉の卵炒め','豚肉となすとビーマンの豆板醤炒め','エビとブロッコリーのオイマヨ','白菜と豚肉のうま煮','鶏肉ハニーマスタード','エビチリ','えのきと卵','ささみブロッコリー','白菜と豚バラ'],
+    '副菜':['きんぴらごぼう','冷奴','ほうれん草のおひたし','大根の煮物','ひじきの煮物','なます','茶碗蒸し','キャベツの浅漬け','白菜の浅漬け','イカバター焼き','枝豆','かぼちゃ煮付け','キャベツ千切り','きゅうりしらす','きゅうりスティック','きゅうりとわかめとツナの酢の物','グリーンサラダ','ゴーヤポン酢和え','ごまきゅうり','小松菜とツナ','里芋のそぼろ煮','塩キャベツ','タコの酢の物','筑前煮','ちくわ磯辺揚げ','ちくわチーズ甘辛','ちくわと小松菜炒め','ところてん','長芋千切り','素豆','ニラ玉','ニラ玉スープ','バターコーン','春雨サラダ','ビーマン塩昆布炒め','ひじき','冷やしトマト','冷や奴','ブロッコリー','ブロッコリー胡麻和え','ほうれん草おひたし','ほうれん草胡麻和え','ほうれん草バター炒め','ポテトサラダ','ポテトフライ','マカロニサラダ','もずく','もやし胡麻和え','レンコンきんぴら','厚揚げ焼き','ジャーマンポテト','大根サラダ','大根とツナの塩昆布サラダ','かまぼこ','にんじんしりしり','根菜胡麻サラダ','ブロッコリーとかにかまサラダ','スパサラ','アスパラベーコン']
+  }
+};
+
+let menuDB=JSON.parse(JSON.stringify(DEFAULT_DB));
+let ingDB=JSON.parse(JSON.stringify(BUILTIN_ING));
+let mealData={};
+let shopItems={};
+let currentModal='';
+
+function getBase(d){const s=new Date(d.getFullYear(),0,1);return Math.floor((d-s)/86400000)%2===0?'ご飯・味噌汁':'トースト';}
+function calcBases(){const t=new Date();const ws=new Date(t);ws.setDate(t.getDate()-t.getDay());return DAYS.map((_,i)=>{const d=new Date(ws);d.setDate(ws.getDate()+i);return getBase(d);});}
+function getWeekLabel(){const t=new Date();const ws=new Date(t);ws.setDate(t.getDate()-t.getDay());const we=new Date(ws);we.setDate(ws.getDate()+6);const f=d=>`${d.getMonth()+1}/${d.getDate()}`;return `${f(ws)}〜${f(we)}`;}
+
+function saveData(){
+  // ローカルストレージに保存する際、BUILTIN_INGとのマージを保持
+  const mergedIng={...BUILTIN_ING,...ingDB};
+  localStorage.setItem(SK,JSON.stringify({menuDB,ingDB:mergedIng,mealData,shopItems}));
+  const t=document.getElementById('saveToast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000);
+}
+function loadData(){
+  try{
+    const r=localStorage.getItem(SK);if(!r)return false;
+    const d=JSON.parse(r);
+    if(d.menuDB)menuDB=d.menuDB;
+    // ingDBはBUILTIN_INGを優先してマージ
+    if(d.ingDB)ingDB={...BUILTIN_ING,...d.ingDB};
+    if(d.mealData)mealData=d.mealData;
+    if(d.shopItems)shopItems=d.shopItems;
+    return true;
+  }catch(e){return false;}
+}
+
+function pick(arr,used){if(!arr||!arr.length)return'';const a=arr.filter(x=>!used.includes(x));const p=a.length?a:arr;const v=p[Math.floor(Math.random()*p.length)];used.push(v);if(used.length>Math.max(1,arr.length-1))used.shift();return v;}
+
+function autoGenerate(){
+  const bases=calcBases();const rU=[],tU=[],mU=[],sU=[];
+  const tO=menuDB['朝食']['主菜'].filter(x=>['目玉焼き','ゆで卵'].includes(x));
+  DAYS.forEach((day,i)=>{
+    const base=bases[i];const isR=base==='ご飯・味噌汁';
+    const bP=isR?menuDB['朝食']['主菜']:(tO.length?tO:menuDB['朝食']['主菜']);
+    mealData[day]['朝食']={base,sub:pick(bP,isR?rU:tU)||mealData[day]['朝食'].sub};
+    const dm=pick(menuDB['夕食']['主菜'],mU);const ds=pick(menuDB['夕食']['副菜'],sU);
+    mealData[day]['夕食']={base:'ご飯・味噌汁',main:dm||mealData[day]['夕食'].main,side:ds||mealData[day]['夕食'].side,free:mealData[day]['夕食'].free||''};
+  });
+  syncShop();renderMeals();renderShop();saveData();
+}
+
+function buildMealText(){
+  const week=getWeekLabel();
+  let t=`📅 今週の献立 ${week}\n━━━━━━━━━━━━━━━\n`;
+  DAYS.forEach(day=>{
+    const b=mealData[day]['朝食'];const d=mealData[day]['夕食'];const lc=mealData[day]['昼食'];
+    t+=`\n【${day}曜日】\n🌅 朝：${b.base}・${b.sub||''}\n☀️ 昼：${lc.text||'自由'}\n🌙 夕：${d.main||''}・${d.side||''}${d.free?'・'+d.free:''}\n`;
+  });
+  return t+'━━━━━━━━━━━━━━━';
+}
+function copyMealText(){
+  navigator.clipboard.writeText(buildMealText()).then(()=>{
+    const b=document.getElementById('copyMealBtn');b.classList.add('done');b.innerHTML='<i class="ti ti-check"></i>コピーしました！';
+    setTimeout(()=>{b.classList.remove('done');b.innerHTML='<i class="ti ti-brand-line"></i>LINEにコピー';},2500);
+  }).catch(()=>alert('コピーできませんでした'));
+}
+function showPrint(){
+  const week=getWeekLabel();
+  let html=`<h2>今週の献立</h2><p class="print-week">${week}</p><table class="print-table"><thead><tr><th>曜日</th><th>朝食</th><th>昼食</th><th>夕食</th></tr></thead><tbody>`;
+  DAYS.forEach(day=>{
+    const b=mealData[day]['朝食'];const lc=mealData[day]['昼食'];const d=mealData[day]['夕食'];
+    html+=`<tr><td>${day}</td><td>${b.base}<br>${b.sub||''}</td><td>${lc.text||'―'}</td><td>${d.main||''}<br><span style="color:#6B6460;font-size:11px">${d.side||''}${d.free?'・'+d.free:''}</span></td></tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('printContent').innerHTML=html;
+  document.getElementById('printOverlay').classList.remove('hidden');
+}
+function doPrint(){
+  const c=document.getElementById('printContent').innerHTML;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><title>今週の献立</title><style>body{font-family:'Noto Sans JP',sans-serif;padding:24px;color:#2A2520;font-size:13px;}h2{font-size:18px;margin-bottom:4px;}.print-week{color:#6B6460;font-size:12px;margin-bottom:16px;}table{width:100%;border-collapse:collapse;}th{background:#F0EDE8;padding:7px 10px;text-align:left;font-size:11px;color:#6B6460;border:1px solid #D8D3CB;}td{padding:8px 10px;border:1px solid #D8D3CB;vertical-align:top;line-height:1.6;}td:first-child{text-align:center;font-weight:700;width:36px;background:#F7F5F0;}</style></head><body>${c}</body></html>`);
+  w.document.close();w.focus();setTimeout(()=>w.print(),500);
+}
+function doCopyForLine(){
+  navigator.clipboard.writeText(buildMealText()).then(()=>{
+    const b=document.getElementById('printCopyBtn');b.classList.add('done');b.innerHTML='<i class="ti ti-check"></i>コピーしました！';
+    setTimeout(()=>{b.classList.remove('done');b.innerHTML='<i class="ti ti-brand-line"></i>LINEにコピー';},2500);
+  }).catch(()=>alert('コピーできませんでした'));
+}
+function closePrintModal(e){if(e.target===document.getElementById('printOverlay'))closePrintModalDirect();}
+function closePrintModalDirect(){document.getElementById('printOverlay').classList.add('hidden');}
+
+function setHint(t){document.getElementById('moodInput').value=t;}
+function requestMoodGen(){
+  alert('この機能はClaude.aiのチャット上でのみ利用できます。');
+}
+
+function syncShop(){
+  Object.keys(shopItems).forEach(c=>{shopItems[c]=shopItems[c].filter(i=>!i.auto);if(!shopItems[c].length)delete shopItems[c];});
+  DAYS.forEach(day=>{
+    const m=mealData[day]['夕食'].main;if(!m)return;
+    const ings=ingDB[m]||BUILTIN_ING[m];if(!ings)return;
+    ings.forEach(ing=>{const c=catOf(ing);if(!shopItems[c])shopItems[c]=[];if(!shopItems[c].find(i=>i.name===ing))shopItems[c].push({name:ing,checked:false,auto:true});});
+  });
+}
+function catOf(ing){const m={'肉・魚':['鶏','豚','牛','サバ','鮭','魚','肉','エビ','あじ','さんま','ぶり'],'野菜':['じゃがいも','玉ねぎ','にんじん','白菜','ねぎ','キャベツ','大根','ほうれん草','ごぼう','生姜','ピーマン','ゴーヤ','なす','かぼちゃ','ブロッコリー','れんこん','筍','もやし','いんげん'],'卵・豆・加工品':['卵','豆腐','しらたき','こんにゃく','納豆','油揚げ','厚揚げ','春雨'],'調味料':['醤油','みりん','砂糖','味噌','塩','酢','ごま油','片栗粉','にんにく','豆板醤','テンメンジャン','オイスターソース','ケチャップ'],'粉・パン粉':['薄力粉','パン粉','片栗粉']};for(const [c,ks] of Object.entries(m)){if(ks.some(k=>ing.includes(k)))return c;}return 'その他';}
+function addShopManual(){const inp=document.getElementById('shopInp');const v=inp.value.trim();if(!v)return;if(!shopItems['手動追加'])shopItems['手動追加']=[];if(!shopItems['手動追加'].find(i=>i.name===v)){shopItems['手動追加'].push({name:v,checked:false,auto:false});renderShop();saveData();}inp.value='';inp.focus();}
+function renderShop(){
+  const g=document.getElementById('shopGrid');g.innerHTML='';
+  const order=['肉・魚','野菜','卵・豆・加工品','調味料','粉・パン粉','手動追加','その他'];
+  const icons={'肉・魚':'ti-fish','野菜':'ti-plant','卵・豆・加工品':'ti-egg','調味料':'ti-bottle','粉・パン粉':'ti-box','手動追加':'ti-pencil','その他':'ti-tag'};
+  let any=false;
+  [...new Set([...order,...Object.keys(shopItems)])].forEach(cat=>{
+    const items=shopItems[cat];if(!items||!items.length)return;any=true;
+    const d=document.createElement('div');d.style.cssText='background:white;border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;';
+    d.innerHTML=`<p style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:7px;display:flex;align-items:center;gap:5px;"><i class="ti ${icons[cat]||'ti-tag'}" style="font-size:12px"></i>${cat}</p>`+
+      items.map((it,i)=>`<div style="display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid var(--border);"><input type="checkbox" id="si-${cat}-${i}" ${it.checked?'checked':''} style="accent-color:var(--accent);width:14px;height:14px;flex-shrink:0;cursor:pointer" onchange="toggleSI('${cat}',${i},this)"><label style="font-size:12px;color:var(--text);cursor:pointer;flex:1;${it.checked?'text-decoration:line-through;color:var(--text3);':''}" for="si-${cat}-${i}">${it.name}</label><button style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;" onclick="delSI('${cat}',${i})">×</button></div>`).join('');
+    g.appendChild(d);
+  });
+  if(!any)g.innerHTML='<p style="font-size:12px;color:var(--text3);font-style:italic;padding:8px 0">献立を生成すると食材が自動追加されます</p>';
+}
+function toggleSI(c,i,cb){if(shopItems[c]&&shopItems[c][i])shopItems[c][i].checked=cb.checked;saveData();}
+function delSI(c,i){if(shopItems[c]){shopItems[c].splice(i,1);if(!shopItems[c].length)delete shopItems[c];}renderShop();saveData();}
+function resetShop(){shopItems={};renderShop();saveData();}
+function copyList(){
+  let t='🛒 買い物リスト\n';
+  Object.entries(shopItems).forEach(([c,items])=>{if(!items||!items.length)return;t+='\n【'+c+'】\n';items.forEach(it=>t+=(it.checked?'✅':'□')+' '+it.name+'\n');});
+  navigator.clipboard.writeText(t).then(()=>{const b=document.getElementById('copyShopBtn');b.innerHTML='<i class="ti ti-check"></i>コピーしました！';setTimeout(()=>b.innerHTML='<i class="ti ti-copy"></i>テキストをコピー',2500);}).catch(()=>alert('コピーできませんでした'));
+}
+
+function switchTab(t,el){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.getElementById('panel-'+t).classList.add('active');el.classList.add('active');}
+
+function addItem(meal,type){const inp=document.getElementById(`inp-${meal}-${type}`);const v=inp.value.trim();if(!v)return;if(!menuDB[meal][type].includes(v)){menuDB[meal][type].push(v);renderDB(meal,type);}inp.value='';inp.focus();}
+function removeItem(meal,type,idx){const n=menuDB[meal][type][idx];menuDB[meal][type].splice(idx,1);if(meal==='夕食'&&type==='主菜')delete ingDB[n];renderDB(meal,type);}
+function renderDB(meal,type){
+  const el=document.getElementById(`db-${meal}-${type}`);if(!el)return;
+  if(!menuDB[meal]||!menuDB[meal][type]||!menuDB[meal][type].length){el.innerHTML='<span style="font-size:11px;color:var(--text3);font-style:italic">まだ登録がありません</span>';return;}
+  el.innerHTML=menuDB[meal][type].map((item,i)=>{
+    const hasI=meal==='夕食'&&type==='主菜'&&(ingDB[item]||BUILTIN_ING[item])&&(ingDB[item]||BUILTIN_ING[item]).length>0;
+    const clickable=meal==='夕食'&&type==='主菜';
+    return `<span class="db-tag${hasI?' has-ing':''}" ${clickable?`onclick="openIngModal('${item}')"`:''}>${hasI?'<i class="ti ti-leaf" style="font-size:10px"></i> ':''} ${item}<button onclick="event.stopPropagation();removeItem('${meal}','${type}',${i})">×</button></span>`;
+  }).join('');
+}
+function renderAllDB(){['朝食','昼食','夕食'].forEach(m=>['主菜','副菜'].forEach(t=>renderDB(m,t)));}
+
+function openIngModal(name){
+  currentModal=name;
+  document.getElementById('modalTitle').textContent=`「${name}」の食材`;
+  // BUILTIN_INGにある場合はingDBに取り込む
+  if(BUILTIN_ING[name]&&!ingDB[name])ingDB[name]=[...BUILTIN_ING[name]];
+  renderIngTags();
+  document.getElementById('modalOverlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('ingInp').focus(),100);
+}
+function renderIngTags(){
+  const tags=document.getElementById('ingTags');
+  const ings=ingDB[currentModal]||BUILTIN_ING[currentModal]||[];
+  tags.innerHTML=ings.length?ings.map((ing,i)=>`<span class="ing-tag">${ing}<button onclick="removeIng(${i})">×</button></span>`).join(''):'<span style="font-size:11px;color:var(--text3);font-style:italic">まだ登録がありません</span>';
+}
+function addIngredient(){const inp=document.getElementById('ingInp');const v=inp.value.trim();if(!v)return;if(!ingDB[currentModal])ingDB[currentModal]=[];if(!ingDB[currentModal].includes(v)){ingDB[currentModal].push(v);renderIngTags();renderDB('夕食','主菜');saveData();}inp.value='';inp.focus();}
+function removeIng(i){if(!ingDB[currentModal])ingDB[currentModal]=[...(BUILTIN_ING[currentModal]||[])];ingDB[currentModal].splice(i,1);renderIngTags();renderDB('夕食','主菜');saveData();}
+function closeIngModal(e){if(e.target===document.getElementById('modalOverlay'))closeIngModalDirect();}
+function closeIngModalDirect(){document.getElementById('modalOverlay').classList.add('hidden');}
+
+function toggleCheck(day,idx){mealData[day]['昼食'].checks[idx]=!mealData[day]['昼食'].checks[idx];const b=document.getElementById(`chk-${day}-${idx}`);const on=mealData[day]['昼食'].checks[idx];b.className='check-btn'+(on?' is-batu':'');b.textContent=on?'×':'';}
+function saveLT(day,val){mealData[day]['昼食'].text=val;}
+function saveDFree(day,val){mealData[day]['夕食'].free=val;}
+function getDC(day){return day==='日'?'day-sun':day==='土'?'day-sat':'day-weekday';}
+
+function renderMeals(){
+  const tb=document.getElementById('mealBody');tb.innerHTML='';
+  DAYS.forEach(day=>{
+    const tr=document.createElement('tr');tr.className=getDC(day);
+    const tdD=document.createElement('td');tdD.textContent=day;tr.appendChild(tdD);
+    const b=mealData[day]['朝食'];
+    const tdB=document.createElement('td');tdB.innerHTML=`<div class="meal-cell"><span class="meal-text"><span class="meal-base">${b.base}</span><span class="meal-main">${b.sub||''}</span></span><button class="edit-btn" onclick="startEdit(this,'${day}','朝食','base','sub','')"><i class="ti ti-edit"></i></button></div>`;tr.appendChild(tdB);
+    const lc=mealData[day]['昼食'];
+    const tdL=document.createElement('td');tdL.innerHTML=`<div class="lunch-wrap"><div class="lunch-checks">${lc.checks.map((on,i)=>`<button id="chk-${day}-${i}" class="check-btn${on?' is-batu':''}" onclick="toggleCheck('${day}',${i})">${on?'×':''}</button>`).join('')}</div><input class="lunch-input" placeholder="メモ" value="${(lc.text||'').replace(/"/g,'&quot;')}" oninput="saveLT('${day}',this.value)"></div>`;tr.appendChild(tdL);
+    const d=mealData[day]['夕食'];
+    const tdDin=document.createElement('td');tdDin.innerHTML=`<div class="meal-cell"><span class="meal-text"><span class="meal-base">${d.base}</span><span class="meal-main">${d.main||''}</span><span class="meal-side">${d.side||''}</span><input class="meal-free" placeholder="メモ" value="${(d.free||'').replace(/"/g,'&quot;')}" oninput="saveDFree('${day}',this.value)"></span><button class="edit-btn" onclick="startEdit(this,'${day}','夕食','base','main','side')"><i class="ti ti-edit"></i></button></div>`;tr.appendChild(tdDin);
+    tb.appendChild(tr);
+  });
+}
+function startEdit(btn,day,meal,k1,k2,k3){
+  const td=btn.closest('td');const d=mealData[day][meal];
+  const v1=d[k1]||'',v2=d[k2]||'',v3=k3?(d[k3]||''):null;
+  let h=`<input class="meal-input" id="ed1-${day}" placeholder="1行目" value="${v1.replace(/"/g,'&quot;')}" onkeydown="if(event.key==='Enter')document.getElementById('ed2-${day}').focus()"><input class="meal-input" id="ed2-${day}" placeholder="2行目" value="${v2.replace(/"/g,'&quot;')}"`;
+  if(v3!==null)h+=` onkeydown="if(event.key==='Enter')document.getElementById('ed3-${day}').focus()"><input class="meal-input" id="ed3-${day}" placeholder="3行目" value="${v3.replace(/"/g,'&quot;')}" onblur="finishEdit('${day}','${meal}','${k1}','${k2}','${k3}')" onkeydown="if(event.key==='Enter')this.blur()">`;
+  else h+=` onblur="finishEdit('${day}','${meal}','${k1}','${k2}','')" onkeydown="if(event.key==='Enter')this.blur()">`;
+  td.innerHTML=h;td.querySelector(`#ed1-${day}`).focus();
+}
+function finishEdit(day,meal,k1,k2,k3){
+  const e1=document.getElementById(`ed1-${day}`);const e2=document.getElementById(`ed2-${day}`);const e3=k3?document.getElementById(`ed3-${day}`):null;
+  if(!e1||!e2)return;const prev=mealData[day][meal];
+  const obj={[k1]:e1.value.trim(),[k2]:e2.value.trim()};
+  if(k3&&e3)obj[k3]=e3.value.trim();if(meal==='夕食')obj.free=prev.free||'';
+  mealData[day][meal]=obj;renderMeals();saveData();
+}
+
+function makeDefault(){
+  const bases=calcBases();
+  const rO=['納豆','卵焼き','焼き鮭','ウインナー','ハム'];
+  const tO=['目玉焼き','ゆで卵'];
+  const dM=menuDB['夕食']['主菜'].slice(0,7);
+  const dS=menuDB['夕食']['副菜'].slice(0,7);
+  const obj={};let ri=0,ti=0;
+  DAYS.forEach((day,i)=>{const base=bases[i];const isR=base==='ご飯・味噌汁';obj[day]={'朝食':{base,sub:isR?rO[ri++%rO.length]:tO[ti++%tO.length]},'昼食':{checks:[false,false,false,false],text:''},'夕食':{base:'ご飯・味噌汁',main:dM[i]||'',side:dS[i]||'',free:''}};});
+  return obj;
+}
+
+function init(){
+  document.getElementById('weekLabel').textContent=getWeekLabel();
+  const loaded=loadData();
+  if(!loaded)mealData=makeDefault();
+  // ingDBにBUILTIN_INGをマージ（未登録のものを補完）
+  // ingDBにBUILTIN_INGをマージ（常に最新の食材リストを適用）
+  Object.keys(BUILTIN_ING).forEach(k=>{
+    if(!ingDB[k]||ingDB[k].length===0)ingDB[k]=[...BUILTIN_ING[k]];
+  });
+  // menuDBの昼食リストを補完（古いデータで上書きされた場合の対策）
+  const lunchMenus=['ちらし寿司','ラーメン','うどん','ナポリタン','ビビンバ丼','ミートソース','冷しゃぶ','そうめん','サンドウィッチ','おしるこ','揚げ餅','チャーハン'];
+  if(!menuDB['昼食'])menuDB['昼食']={'主菜':[],'副菜':[]};
+  lunchMenus.forEach(m=>{if(!menuDB['昼食']['主菜'].includes(m))menuDB['昼食']['主菜'].push(m);});
+  // 夕食副菜を補完
+  const dinnerSides=['イカバター焼き','枝豆','かぼちゃ煮付け','キャベツ千切り','きゅうりしらす','きゅうりスティック','きゅうりとわかめとツナの酢の物','グリーンサラダ','ゴーヤポン酢和え','ごまきゅうり','小松菜とツナ','里芋のそぼろ煮','塩キャベツ','タコの酢の物','筑前煮','ちくわ磯辺揚げ','ちくわチーズ甘辛','ちくわと小松菜炒め','ところてん','長芋千切り','素豆','ニラ玉','ニラ玉スープ','バターコーン','春雨サラダ','ビーマン塩昆布炒め','ひじき','冷やしトマト','冷や奴','ブロッコリー','ブロッコリー胡麻和え','ほうれん草おひたし','ほうれん草胡麻和え','ほうれん草バター炒め','ポテトサラダ','ポテトフライ','マカロニサラダ','もずく','もやし胡麻和え','レンコンきんぴら','厚揚げ焼き','ジャーマンポテト','大根サラダ','大根とツナの塩昆布サラダ','かまぼこ','にんじんしりしり','根菜胡麻サラダ','ブロッコリーとかにかまサラダ','スパサラ','アスパラベーコン'];
+  if(!menuDB['夕食']['副菜'])menuDB['夕食']['副菜']=[];
+  dinnerSides.forEach(s=>{if(!menuDB['夕食']['副菜'].includes(s))menuDB['夕食']['副菜'].push(s);});
+  // 夕食主菜を補完
+  const dinnerMains=['青椒菜と豚バラオイスターソース','チンジャオロース','つくね','手羽先','天ぷら','鶏そぼろ','鶏とごぼう炒め','鶏むね肉ごま照りスティック','豚カツ','ハムチーズ','豚汁','鍋','白菜と厚揚げ炒め','ハヤシライス','春巻き','ハンバーグ','豚キムチ','豚肉甘辛炒め','豚とレンコンと長ネギ炒め','豚バラ甘酢','ぶり照り焼き','回鍋肉','麻婆豆腐','もやしとピーマンの豚肉炒め','野菜炒め','ミートドリア','エビとブロッコリーの中華炒め','豚肉と筍のオイスター炒め','あじフライ','ガリボンチキン','牛肉とごぼう','豚肉巻き','肉団子','豚バラとビーマンの塩昆布炒め','豚肉とナスのさっぱり炒め','小松菜と豚肉の卵炒め','豚肉となすとビーマンの豆板醤炒め','エビとブロッコリーのオイマヨ','白菜と豚肉のうま煮','鶏肉ハニーマスタード','エビチリ','えのきと卵','ささみブロッコリー','白菜と豚バラ'];
+  if(!menuDB['夕食']['主菜'])menuDB['夕食']['主菜']=[];
+  dinnerMains.forEach(m=>{if(!menuDB['夕食']['主菜'].includes(m))menuDB['夕食']['主菜'].push(m);});
+  DAYS.forEach(day=>{
+    if(!mealData[day])mealData[day]=makeDefault()[day];
+    if(!mealData[day]['朝食'])mealData[day]['朝食']={base:'ご飯・味噌汁',sub:''};
+    if(!mealData[day]['昼食'])mealData[day]['昼食']={checks:[false,false,false,false],text:''};
+    if(!mealData[day]['夕食'])mealData[day]['夕食']={base:'ご飯・味噌汁',main:'',side:'',free:''};
+    if(!mealData[day]['夕食'].free)mealData[day]['夕食'].free='';
+  });
+  renderMeals();renderShop();renderAllDB();
+}
+init();
+</script>
+</body>
+</html>
